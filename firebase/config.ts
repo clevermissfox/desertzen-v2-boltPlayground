@@ -20,14 +20,30 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 // For development/testing - connect to emulators in development for all platforms
-if (__DEV__) {
-  // Connect to Firebase emulators for development
-  // Make sure to start the emulators first: firebase emulators:start
+// Only connect to emulators if they are actually running
+if (__DEV__ && typeof window !== 'undefined') {
+  // Check if we're in a browser environment and emulators might be available
+  const connectToEmulators = async () => {
+    try {
+      // Test if emulator is running by making a simple request
+      const response = await fetch('http://localhost:9099', { 
+        method: 'GET',
+        mode: 'no-cors'
+      });
+      
+      // If we get here, emulator is likely running
+      if (!auth._delegate._config.emulator) {
+        connectAuthEmulator(auth, "http://localhost:9099");
+      }
+      
+      if (!db._delegate._databaseId.projectId.includes('demo-')) {
+        connectFirestoreEmulator(db, "localhost", 8080);
+      }
+    } catch (error) {
+      // Emulators are not running, use production Firebase
+      console.log("Firebase emulators not detected, using production Firebase");
+    }
+  };
   
-  try {
-    connectAuthEmulator(auth, "http://localhost:9099");
-    connectFirestoreEmulator(db, "localhost", 8080);
-  } catch (error) {
-    console.log("Emulator connection error:", error);
-  }
+  connectToEmulators();
 }
