@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     position: "absolute",
-    right: 12,
+    right: 8,
     top: 0,
     bottom: 0,
     justifyContent: "center",
