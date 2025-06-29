@@ -19,6 +19,7 @@ type AuthModalProps = {
   onModeChange: (mode: "signIn" | "signUp") => void;
   onClose: () => void;
   onAuth: (email: string, password: string, mode: "signIn" | "signUp") => void;
+  onForgotPassword: (email: string) => void;
   error: string | null;
 };
 
@@ -28,6 +29,7 @@ export const AuthModal = ({
   onModeChange,
   onClose,
   onAuth,
+  onForgotPassword,
   error,
 }: AuthModalProps) => {
   const { theme } = useTheme();
@@ -38,6 +40,19 @@ export const AuthModal = ({
     onAuth(email, password, mode);
     setEmail("");
     setPassword("");
+  };
+
+  const handleForgotPassword = () => {
+    if (!email.trim()) {
+      return;
+    }
+    onForgotPassword(email);
+  };
+
+  const handleClose = () => {
+    setEmail("");
+    setPassword("");
+    onClose();
   };
 
   return (
@@ -59,15 +74,20 @@ export const AuthModal = ({
             {mode === "signIn" ? "Sign In" : "Sign Up"}
           </Text>
           {error && (
-            <Text
-              style={{
-                color: theme.accent,
-                textAlign: "center",
-                marginBottom: 8,
-              }}
-            >
-              {error}
-            </Text>
+            <View style={styles.errorContainer}>
+              <Text
+                style={[
+                  styles.errorText,
+                  {
+                    color: error.includes("sent to")
+                      ? theme.accent
+                      : theme.error,
+                  },
+                ]}
+              >
+                {error}
+              </Text>
+            </View>
           )}
           <TextInput
             placeholder="Email"
@@ -75,7 +95,11 @@ export const AuthModal = ({
             onChangeText={setEmail}
             style={[
               styles.input,
-              { borderColor: theme.border, color: theme.text },
+              { 
+                borderColor: theme.border, 
+                color: theme.text,
+                backgroundColor: theme.background,
+              },
             ]}
             placeholderTextColor={theme.textTertiary}
             autoCapitalize="none"
@@ -87,26 +111,52 @@ export const AuthModal = ({
             onChangeText={setPassword}
             style={[
               styles.input,
-              { borderColor: theme.border, color: theme.text },
+              { 
+                borderColor: theme.border, 
+                color: theme.text,
+                backgroundColor: theme.background,
+              },
             ]}
             placeholderTextColor={theme.textTertiary}
             secureTextEntry
           />
+          
+          {mode === "signIn" && (
+            <TouchableOpacity 
+              onPress={handleForgotPassword}
+              style={styles.forgotPasswordContainer}
+              disabled={!email.trim()}
+            >
+              <Text 
+                style={[
+                  styles.forgotPasswordText, 
+                  { 
+                    color: email.trim() ? theme.accent : theme.textTertiary,
+                  }
+                ]}
+              >
+                Forgot Password?
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={[styles.button, { backgroundColor: theme.accent }]}
             onPress={handleSubmit}
           >
-            <Text style={[textStyles.buttonText, , { color: theme.neutral0 }]}>
+            <Text style={[textStyles.buttonText, { color: theme.neutral0 }]}>
               {mode === "signIn" ? "Sign In" : "Sign Up"}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose}>
+          
+          <TouchableOpacity onPress={handleClose}>
             <Text
               style={[textStyles.closeText, { color: theme.textSecondary }]}
             >
               Cancel
             </Text>
           </TouchableOpacity>
+          
           <TouchableOpacity
             onPress={() =>
               onModeChange(mode === "signIn" ? "signUp" : "signIn")
@@ -132,7 +182,7 @@ const viewStyles = StyleSheet.create({
     borderWidth: 1,
     padding: 24,
     width: "80%",
-    // shadowOffset: { width: 0, height: 1 },
+    maxWidth: 400,
   },
   overlay: {
     flex: 1,
@@ -145,28 +195,58 @@ const viewStyles = StyleSheet.create({
 const textStyles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSizes.lg,
-    // fontWeight: Typography.fontWeights.bold,
     fontFamily: fontFamilies.bold,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.md,
+    textAlign: "center",
   },
   buttonText: {
     fontFamily: fontFamilies.medium,
     fontSize: Typography.fontSizes.md,
     textAlign: "center",
   },
-  closeText: { textAlign: "center", marginTop: 8 },
+  closeText: { 
+    textAlign: "center", 
+    marginTop: Spacing.sm,
+    fontFamily: fontFamilies.regular,
+  },
   modeSwitchText: {
     textAlign: "center",
-    marginTop: 8,
+    marginTop: Spacing.sm,
+    fontFamily: fontFamilies.regular,
+    fontSize: Typography.fontSizes.sm,
   },
 });
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: "bold", marginBottom: 12 },
-  input: { borderWidth: 1, marginBottom: 12, padding: 8, borderRadius: 8 },
+  input: { 
+    borderWidth: 1, 
+    marginBottom: Spacing.sm, 
+    padding: Spacing.sm, 
+    borderRadius: 8,
+    fontFamily: fontFamilies.regular,
+  },
   button: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xl,
     borderRadius: 24,
+    marginTop: Spacing.sm,
+  },
+  errorContainer: {
+    marginBottom: Spacing.sm,
+    padding: Spacing.sm,
+    borderRadius: 8,
+  },
+  errorText: {
+    textAlign: "center",
+    fontFamily: fontFamilies.regular,
+    fontSize: Typography.fontSizes.sm,
+  },
+  forgotPasswordContainer: {
+    alignSelf: "flex-end",
+    marginBottom: Spacing.md,
+  },
+  forgotPasswordText: {
+    fontFamily: fontFamilies.medium,
+    fontSize: Typography.fontSizes.sm,
   },
 });

@@ -14,6 +14,7 @@ import {
   signIn,
   signUp,
   logout,
+  resetPassword,
 } from "@/firebase/auth";
 import { User } from "firebase/auth";
 import { useTheme } from "../../hooks/useTheme";
@@ -72,6 +73,16 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleForgotPassword = async (email: string) => {
+    setAuthError(null);
+    try {
+      await resetPassword(email);
+      setAuthError(`Password reset email sent to ${email}!`);
+    } catch (err: any) {
+      setAuthError(getFriendlyError(err.code));
+    }
+  };
+
   const handleModeChange = (mode: "signIn" | "signUp") => {
     setAuthMode(mode);
     setAuthError(null); // Clear error when switching modes
@@ -90,6 +101,10 @@ export default function ProfileScreen() {
         return "Please enter a valid email address.";
       case "auth/weak-password":
         return "Password should be at least 6 characters.";
+      case "auth/user-disabled":
+        return "This account has been disabled.";
+      case "auth/too-many-requests":
+        return "Too many failed attempts. Please try again later.";
       default:
         return "Something went wrong. Please try again.";
     }
@@ -350,6 +365,7 @@ export default function ProfileScreen() {
         onModeChange={handleModeChange}
         onClose={() => setShowAuthModal(false)}
         onAuth={handleAuth}
+        onForgotPassword={handleForgotPassword}
         error={authError}
       />
     </>
