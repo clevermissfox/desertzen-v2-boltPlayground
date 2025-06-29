@@ -265,8 +265,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    width: 40,
-    height: 48,
+    width: 30,
+    height: 30,
   },
   button: {
     paddingVertical: Spacing.sm,
