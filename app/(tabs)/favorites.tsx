@@ -43,8 +43,7 @@ export default function FavoritesScreen() {
         No Favorites Yet
       </Text>
       <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-        Add meditations to your favorites by tapping the heart icon on any
-        meditation. Sign in to save favorites across devices.
+        Add meditations to your favorites by tapping the heart icon; Sign in to save favorites across devices.
       </Text>
     </View>
   );
