@@ -9,106 +9,23 @@ import {
   Image,
   Platform,
 } from "react-native";
-import {
-  subscribeToAuthChanges,
-  signIn,
-  signUp,
-  logout,
-  resetPassword,
-} from "@/firebase/auth";
+import { logout } from "@/firebase/auth";
 import { User } from "firebase/auth";
 import { useTheme } from "../../hooks/useTheme";
 import { ThemeToggle } from "../../components/ThemeToggle";
-import { AuthModal } from "@/components/AuthModal";
 import Spacing from "../../constants/Spacing";
 import Typography from "../../constants/Typography";
 import { fontFamilies } from "@/constants/Fonts";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-// import {
-//   User,
-//   Bell,
-//   Moon,
-//   Volume2,
-//   Clock,
-//   Download,
-//   Settings,
-//   ChevronRight,
-// } from "lucide-react-native";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfileScreen() {
   const { theme, isDark, setTheme } = useTheme();
   const router = useRouter();
+  const { user } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [autoDownloadEnabled, setAutoDownloadEnabled] = useState(false);
-
-  // user log in state
-  const [user, setUser] = useState<User | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<"signIn" | "signUp">("signIn");
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Subscribe to Firebase auth state changes
-    const unsubscribe = subscribeToAuthChanges(setUser);
-    return () => unsubscribe();
-  }, []);
-
-  const handleAuth = async (
-    email: string,
-    password: string,
-    mode: "signIn" | "signUp"
-  ) => {
-    setAuthError(null);
-    try {
-      if (mode === "signIn") {
-        await signIn(email, password);
-      } else {
-        await signUp(email, password);
-      }
-      setShowAuthModal(false);
-    } catch (err: any) {
-      // Use the error code for friendlier messages
-      setAuthError(getFriendlyError(err.code));
-    }
-  };
-
-  const handleForgotPassword = async (email: string) => {
-    setAuthError(null);
-    try {
-      await resetPassword(email);
-      setAuthError(`Password reset email sent to ${email}!`);
-    } catch (err: any) {
-      setAuthError(getFriendlyError(err.code));
-    }
-  };
-
-  const handleModeChange = (mode: "signIn" | "signUp") => {
-    setAuthMode(mode);
-    setAuthError(null); // Clear error when switching modes
-  };
-
-  const getFriendlyError = (code: string) => {
-    switch (code) {
-      case "auth/invalid-login-credentials":
-      case "auth/user-not-found":
-        return "No account found with this email.";
-      case "auth/wrong-password":
-        return "Incorrect password. Please try again.";
-      case "auth/email-already-in-use":
-        return "An account with this email already exists.";
-      case "auth/invalid-email":
-        return "Please enter a valid email address.";
-      case "auth/weak-password":
-        return "Password should be at least 6 characters.";
-      case "auth/user-disabled":
-        return "This account has been disabled.";
-      case "auth/too-many-requests":
-        return "Too many failed attempts. Please try again later.";
-      default:
-        return "Something went wrong. Please try again.";
-    }
-  };
 
   type SettingItemProps = {
     icon: ReactNode;
@@ -190,7 +107,7 @@ export default function ProfileScreen() {
       </Text>
       <TouchableOpacity
         style={[styles.loginButton, { backgroundColor: theme.accent }]}
-        onPress={() => setShowAuthModal(true)}
+        onPress={() => router.push("/auth")}
       >
         <Text style={[styles.loginButtonText, { color: theme.neutral0 }]}>
           Sign In / Sign Up
@@ -234,141 +151,125 @@ export default function ProfileScreen() {
   );
 
   return (
-    <>
-      <ScrollView
-        style={[styles.container, { backgroundColor: theme.background }]}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* <View style={viewStyles.header}>
-          <Text style={[textStyles.title, { color: theme.text }]}>Profile</Text>
-          <ThemeToggle />
-        </View> */}
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
+      {user ? <UserProfileView user={user} /> : <GuestView />}
 
-        {user ? <UserProfileView user={user} /> : <GuestView />}
+      <View style={viewStyles.settingsContainer}>
+        <Text style={[textStyles.sectionTitle, { color: theme.text }]}>
+          App Settings
+        </Text>
 
-        <View style={viewStyles.settingsContainer}>
-          <Text style={[textStyles.sectionTitle, { color: theme.text }]}>
-            App Settings
-          </Text>
+        <View
+          style={[
+            viewStyles.settingsGroup,
+            { backgroundColor: theme.card, borderColor: theme.border },
+          ]}
+        >
+          <SettingItem
+            icon={
+              <Ionicons
+                name="notifications"
+                size={22}
+                color={theme.accentLight}
+              />
+            }
+            title="Notifications"
+            showToggle={true}
+            toggleValue={notificationsEnabled}
+            onToggleChange={setNotificationsEnabled}
+            onPress={() => {}}
+          />
 
-          <View
-            style={[
-              viewStyles.settingsGroup,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            <SettingItem
-              icon={
-                <Ionicons
-                  name="notifications"
-                  size={22}
-                  color={theme.accentLight}
-                />
-              }
-              title="Notifications"
-              showToggle={true}
-              toggleValue={notificationsEnabled}
-              onToggleChange={setNotificationsEnabled}
-              onPress={() => {}}
-            />
+          <SettingItem
+            icon={
+              <Ionicons name="moon" size={22} color={theme.accentLight} />
+            }
+            title="Dark Mode"
+            showToggle={true}
+            toggleValue={isDark}
+            onToggleChange={(value) => setTheme(value)}
+            onPress={() => {}}
+          />
 
-            <SettingItem
-              icon={
-                <Ionicons name="moon" size={22} color={theme.accentLight} />
-              }
-              title="Dark Mode"
-              showToggle={true}
-              toggleValue={isDark}
-              onToggleChange={(value) => setTheme(value)}
-              onPress={() => {}}
-            />
-
-            <SettingItem
-              icon={
-                <Ionicons name="download" size={22} color={theme.accentLight} />
-              }
-              title="Auto Download"
-              showToggle={true}
-              toggleValue={autoDownloadEnabled}
-              onToggleChange={setAutoDownloadEnabled}
-              onPress={() => {}}
-            />
-          </View>
-
-          <Text style={[textStyles.sectionTitle, { color: theme.text }]}>
-            Playback
-          </Text>
-
-          <View
-            style={[
-              viewStyles.settingsGroup,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            <SettingItem
-              icon={
-                <Ionicons
-                  name="volume-high"
-                  size={22}
-                  color={theme.accentLight}
-                />
-              }
-              title="Audio Quality"
-              onPress={() => {}}
-            />
-
-            <SettingItem
-              icon={
-                <Ionicons name="time" size={22} color={theme.accentLight} />
-              }
-              title="Sleep Timer"
-              onPress={() => {}}
-            />
-          </View>
-
-          <Text style={[textStyles.sectionTitle, { color: theme.text }]}>
-            Other
-          </Text>
-
-          <View
-            style={[
-              viewStyles.settingsGroup,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            <SettingItem
-              icon={
-                <Ionicons name="settings" size={22} color={theme.accentLight} />
-              }
-              title="About Desert Zen"
-              onPress={() => {}}
-            />
-
-            {user && (
-              <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-                <Text style={[textStyles.logoutText, { color: theme.error }]}>
-                  Sign Out
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <SettingItem
+            icon={
+              <Ionicons name="download" size={22} color={theme.accentLight} />
+            }
+            title="Auto Download"
+            showToggle={true}
+            toggleValue={autoDownloadEnabled}
+            onToggleChange={setAutoDownloadEnabled}
+            onPress={() => {}}
+          />
         </View>
 
-        <Text style={[textStyles.versionText, { color: theme.textTertiary }]}>
-          Version 1.0.0
+        <Text style={[textStyles.sectionTitle, { color: theme.text }]}>
+          Playback
         </Text>
-      </ScrollView>
-      <AuthModal
-        visible={showAuthModal}
-        mode={authMode}
-        onModeChange={handleModeChange}
-        onClose={() => setShowAuthModal(false)}
-        onAuth={handleAuth}
-        onForgotPassword={handleForgotPassword}
-        error={authError}
-      />
-    </>
+
+        <View
+          style={[
+            viewStyles.settingsGroup,
+            { backgroundColor: theme.card, borderColor: theme.border },
+          ]}
+        >
+          <SettingItem
+            icon={
+              <Ionicons
+                name="volume-high"
+                size={22}
+                color={theme.accentLight}
+              />
+            }
+            title="Audio Quality"
+            onPress={() => {}}
+          />
+
+          <SettingItem
+            icon={
+              <Ionicons name="time" size={22} color={theme.accentLight} />
+            }
+            title="Sleep Timer"
+            onPress={() => {}}
+          />
+        </View>
+
+        <Text style={[textStyles.sectionTitle, { color: theme.text }]}>
+          Other
+        </Text>
+
+        <View
+          style={[
+            viewStyles.settingsGroup,
+            { backgroundColor: theme.card, borderColor: theme.border },
+          ]}
+        >
+          <SettingItem
+            icon={
+              <Ionicons name="settings" size={22} color={theme.accentLight} />
+            }
+            title="About Desert Zen"
+            onPress={() => {}}
+          />
+
+          {user && (
+            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+              <Text style={[textStyles.logoutText, { color: theme.error }]}>
+                Sign Out
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <Text style={[textStyles.versionText, { color: theme.textTertiary }]}>
+        Version 1.0.0
+      </Text>
+    </ScrollView>
   );
 }
 

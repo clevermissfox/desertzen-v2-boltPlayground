@@ -9,23 +9,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useFonts } from "@expo-google-fonts/lora";
 import { fontAssets } from "@/constants/Fonts";
 import { fontFamilies } from "@/constants/Fonts";
-// import {
-//   Inter_400Regular,
-//   Inter_500Medium,
-//   Inter_700Bold,
-// } from "@expo-google-fonts/inter";
 
 export default function RootLayout() {
   useFrameworkReady();
   const { theme, isDark } = useTheme();
 
   const [fontsLoaded, fontError] = useFonts(fontAssets);
-
-  // const [fontsLoaded, fontError] = useFonts({
-  //   "Inter-Regular": Inter_400Regular,
-  //   "Inter-Medium": Inter_500Medium,
-  //   "Inter-Bold": Inter_700Bold,
-  // });
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -53,6 +42,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/index" options={{ headerShown: false }} />
           <Stack.Screen
             name="update-profile"
             options={{ headerShown: true, title: "Update Profile" }}
