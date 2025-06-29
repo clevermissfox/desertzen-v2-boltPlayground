@@ -19,15 +19,15 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// For development/testing - only connect to emulators in development
-if (__DEV__ && Platform.OS !== 'web') {
-  // Uncomment these lines if you want to use Firebase emulators for development
+// For development/testing - connect to emulators in development for all platforms
+if (__DEV__) {
+  // Connect to Firebase emulators for development
   // Make sure to start the emulators first: firebase emulators:start
   
-  // try {
-  //   connectAuthEmulator(auth, "http://localhost:9099");
-  //   connectFirestoreEmulator(db, "localhost", 8080);
-  // } catch (error) {
-  //   console.log("Emulator connection error:", error);
-  // }
+  try {
+    connectAuthEmulator(auth, "http://localhost:9099");
+    connectFirestoreEmulator(db, "localhost", 8080);
+  } catch (error) {
+    console.log("Emulator connection error:", error);
+  }
 }
