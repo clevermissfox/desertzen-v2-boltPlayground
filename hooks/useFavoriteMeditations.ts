@@ -21,12 +21,14 @@ interface FavoritesState {
   favorites: string[];
   localFavorites: string[];
   isLoading: boolean;
+  _hasHydrated: boolean;
   addFavorite: (id: string, user: User | null) => Promise<void>;
   removeFavorite: (id: string, user: User | null) => Promise<void>;
   isFavorite: (id: string, user: User | null) => boolean;
   setFavorites: (favorites: string[]) => void;
   setLocalFavorites: (favorites: string[]) => void;
   setLoading: (loading: boolean) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
   syncLocalToFirebase: (user: User) => Promise<void>;
 }
 
@@ -36,6 +38,7 @@ const useFavoritesStore = create<FavoritesState>()(
       favorites: [],
       localFavorites: [],
       isLoading: false,
+      _hasHydrated: false,
       
       addFavorite: async (id: string, user: User | null) => {
         if (!user) {
@@ -100,6 +103,7 @@ const useFavoritesStore = create<FavoritesState>()(
       setFavorites: (favorites: string[]) => set({ favorites }),
       setLocalFavorites: (favorites: string[]) => set({ localFavorites: favorites }),
       setLoading: (loading: boolean) => set({ isLoading: loading }),
+      setHasHydrated: (hasHydrated: boolean) => set({ _hasHydrated: hasHydrated }),
       
       syncLocalToFirebase: async (user: User) => {
         const localFavorites = get().localFavorites;
@@ -128,6 +132,12 @@ const useFavoritesStore = create<FavoritesState>()(
       name: "local-favorites-storage",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ localFavorites: state.localFavorites }),
+      onRehydrateStorage: () => (state) => {
+        // This callback is called after the store has been rehydrated from AsyncStorage
+        if (state) {
+          state.setHasHydrated(true);
+        }
+      },
     }
   )
 );
@@ -194,9 +204,13 @@ export function useFavoriteMeditations() {
   // Return the appropriate favorites based on auth state
   const currentFavorites = user ? store.favorites : store.localFavorites;
 
+  // Calculate loading state: show loading if store hasn't hydrated yet (for guest mode)
+  // or if user is logged in and Firebase data is still loading
+  const isLoading = !store._hasHydrated || (user && store.isLoading);
+
   return {
     favorites: currentFavorites,
-    isLoading: store.isLoading,
+    isLoading,
     addFavorite,
     removeFavorite,
     isFavorite,
