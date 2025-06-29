@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { 
   doc, 
   setDoc, 
@@ -20,15 +20,13 @@ interface User {
 interface FavoritesState {
   favorites: string[];
   localFavorites: string[];
-  isLoading: boolean;
-  _hasHydrated: boolean;
+  isFirebaseLoading: boolean;
   addFavorite: (id: string, user: User | null) => Promise<void>;
   removeFavorite: (id: string, user: User | null) => Promise<void>;
   isFavorite: (id: string, user: User | null) => boolean;
   setFavorites: (favorites: string[]) => void;
   setLocalFavorites: (favorites: string[]) => void;
-  setLoading: (loading: boolean) => void;
-  setHasHydrated: (hasHydrated: boolean) => void;
+  setFirebaseLoading: (loading: boolean) => void;
   syncLocalToFirebase: (user: User) => Promise<void>;
 }
 
@@ -37,8 +35,7 @@ const useFavoritesStore = create<FavoritesState>()(
     (set, get) => ({
       favorites: [],
       localFavorites: [],
-      isLoading: false,
-      _hasHydrated: false,
+      isFirebaseLoading: false,
       
       addFavorite: async (id: string, user: User | null) => {
         if (!user) {
@@ -102,8 +99,7 @@ const useFavoritesStore = create<FavoritesState>()(
       
       setFavorites: (favorites: string[]) => set({ favorites }),
       setLocalFavorites: (favorites: string[]) => set({ localFavorites: favorites }),
-      setLoading: (loading: boolean) => set({ isLoading: loading }),
-      setHasHydrated: (hasHydrated: boolean) => set({ _hasHydrated: hasHydrated }),
+      setFirebaseLoading: (loading: boolean) => set({ isFirebaseLoading: loading }),
       
       syncLocalToFirebase: async (user: User) => {
         const localFavorites = get().localFavorites;
@@ -132,12 +128,6 @@ const useFavoritesStore = create<FavoritesState>()(
       name: "local-favorites-storage",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ localFavorites: state.localFavorites }),
-      onRehydrateStorage: () => (state) => {
-        // This callback is called after the store has been rehydrated from AsyncStorage
-        if (state) {
-          state.setHasHydrated(true);
-        }
-      },
     }
   )
 );
@@ -145,12 +135,23 @@ const useFavoritesStore = create<FavoritesState>()(
 export function useFavoriteMeditations() {
   const { user } = useAuth();
   const store = useFavoritesStore();
+  const [isLocalLoading, setIsLocalLoading] = useState(true);
+
+  // Handle local storage loading for guest users
+  useEffect(() => {
+    // Simulate a brief loading period for local storage hydration
+    const timer = setTimeout(() => {
+      setIsLocalLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!user) {
       // Clear Firebase favorites when user logs out, keep local favorites
       store.setFavorites([]);
-      store.setLoading(false);
+      store.setFirebaseLoading(false);
       return;
     }
 
@@ -160,28 +161,40 @@ export function useFavoriteMeditations() {
     }
 
     // Set up real-time listener for user's favorites
-    store.setLoading(true);
+    store.setFirebaseLoading(true);
     
+    // Set up a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.warn("Firebase favorites loading timed out");
+      store.setFirebaseLoading(false);
+    }, 10000); // 10 second timeout
+
     try {
       const favoritesRef = collection(db, `users/${user.uid}/favorites`);
       
       const unsubscribe = onSnapshot(
         favoritesRef,
         (snapshot) => {
+          clearTimeout(loadingTimeout);
           const favoriteIds = snapshot.docs.map(doc => doc.id);
           store.setFavorites(favoriteIds);
-          store.setLoading(false);
+          store.setFirebaseLoading(false);
         },
         (error) => {
+          clearTimeout(loadingTimeout);
           console.error("Error fetching favorites:", error);
-          store.setLoading(false);
+          store.setFirebaseLoading(false);
         }
       );
 
-      return () => unsubscribe();
+      return () => {
+        clearTimeout(loadingTimeout);
+        unsubscribe();
+      };
     } catch (error) {
+      clearTimeout(loadingTimeout);
       console.error("Error setting up favorites listener:", error);
-      store.setLoading(false);
+      store.setFirebaseLoading(false);
     }
   }, [user, store.localFavorites.length]);
 
@@ -204,9 +217,8 @@ export function useFavoriteMeditations() {
   // Return the appropriate favorites based on auth state
   const currentFavorites = user ? store.favorites : store.localFavorites;
 
-  // Calculate loading state: show loading if store hasn't hydrated yet (for guest mode)
-  // or if user is logged in and Firebase data is still loading
-  const isLoading = !store._hasHydrated || (user && store.isLoading);
+  // Simplified loading state logic
+  const isLoading = user ? store.isFirebaseLoading : isLocalLoading;
 
   return {
     favorites: currentFavorites,
