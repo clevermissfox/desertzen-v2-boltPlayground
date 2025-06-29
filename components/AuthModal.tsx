@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   forgotPasswordText: {
-    fontFamily: fontFamilies.medium,
+    fontFamily: fontFamilies.regular,
     fontSize: Typography.fontSizes.sm,
   },
 });
