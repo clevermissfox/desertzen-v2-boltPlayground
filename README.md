@@ -1,6 +1,6 @@
 # Welcome to your Expo app 👋
 
-Lets check This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started
 
@@ -17,7 +17,7 @@ Lets check This is an [Expo](https://expo.dev) project created with [`create-exp
    ```
 
    Use npx expo as expo-cli is deprecated.
-   You access it using `npx expo <command>`, which runs the version that matches your project’s Expo SDK
+   You access it using `npx expo <command>`, which runs the version that matches your project's Expo SDK
 
 In the output, you'll find options to open the app in a
 
@@ -27,6 +27,35 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Firebase and Expo Go Compatibility
+
+**Important**: This app uses Firebase Firestore which has compatibility issues with Expo Go due to React Native's new architecture and certain native dependencies.
+
+### For Development:
+
+1. **Expo Go (Limited)**: The app will work in Expo Go but Firebase features may not function properly. You'll see errors like "createJobs is not a function" when trying to use authentication or Firestore.
+
+2. **Development Build (Recommended)**: For full Firebase functionality, create a development build:
+   ```bash
+   npx expo install expo-dev-client
+   eas build --profile development --platform android
+   # or for iOS:
+   eas build --profile development --platform ios
+   ```
+
+3. **Local Development**: You can also run locally:
+   ```bash
+   npx expo run:android
+   # or
+   npx expo run:ios
+   ```
+
+### Features:
+
+- **Local Favorites**: When not logged in, favorites are saved locally and persist between app sessions
+- **Firebase Sync**: When logged in, favorites sync to Firebase and are available across devices
+- **Automatic Migration**: Local favorites are automatically synced to Firebase when you log in
 
 ## Get a fresh project
 

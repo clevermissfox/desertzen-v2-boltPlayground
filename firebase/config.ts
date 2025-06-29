@@ -1,9 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { Platform } from "react-native";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -19,3 +18,16 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// For development/testing - only connect to emulators in development
+if (__DEV__ && Platform.OS !== 'web') {
+  // Uncomment these lines if you want to use Firebase emulators for development
+  // Make sure to start the emulators first: firebase emulators:start
+  
+  // try {
+  //   connectAuthEmulator(auth, "http://localhost:9099");
+  //   connectFirestoreEmulator(db, "localhost", 8080);
+  // } catch (error) {
+  //   console.log("Emulator connection error:", error);
+  // }
+}

@@ -9,11 +9,10 @@ import Typography from "../../constants/Typography";
 import { Meditation } from "@/types/Meditation";
 import { Ionicons } from "@expo/vector-icons";
 import { fontFamilies } from "@/constants/Fonts";
-// import { Heart } from 'lucide-react-native';
 
 export default function FavoritesScreen() {
   const { theme } = useTheme();
-  const { favorites, isLoading } = useFavoriteMeditations();
+  const { favorites, isLoading, isLoggedIn } = useFavoriteMeditations();
 
   const favoriteMeditations = meditations.filter((meditation) =>
     favorites.includes(meditation.id)
@@ -50,6 +49,20 @@ export default function FavoritesScreen() {
     </View>
   );
 
+  const LocalFavoritesNotice = () => (
+    <View style={[styles.noticeContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View style={styles.noticeHeader}>
+        <Ionicons name="information-circle" color={theme.accent} size={20} />
+        <Text style={[styles.noticeTitle, { color: theme.text }]}>
+          Guest Mode
+        </Text>
+      </View>
+      <Text style={[styles.noticeText, { color: theme.textSecondary }]}>
+        Your favorites are saved locally and won't sync across devices. Sign in to save them permanently.
+      </Text>
+    </View>
+  );
+
   if (isLoading) {
     return (
       <View
@@ -64,16 +77,8 @@ export default function FavoritesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* <View style={styles.headerContainer}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          Your Favorites
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
-          {favoriteMeditations.length}{" "}
-          {favoriteMeditations.length === 1 ? "meditation" : "meditations"}
-        </Text>
-      </View> */}
-
+      {!isLoggedIn && favoriteMeditations.length > 0 && <LocalFavoritesNotice />}
+      
       <FlatList
         data={favoriteMeditations}
         renderItem={renderItem}
@@ -97,18 +102,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontFamily: fontFamilies.regular,
-    fontSize: Typography.fontSizes.md,
-  },
-  headerContainer: {
-    padding: Spacing.md,
-  },
-  headerTitle: {
-    fontFamily: fontFamilies.bold,
-    fontSize: Typography.fontSizes.xxl,
-    marginBottom: Spacing.xs,
-  },
-  headerSubtitle: {
     fontFamily: fontFamilies.regular,
     fontSize: Typography.fontSizes.md,
   },
@@ -139,5 +132,26 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSizes.md,
     textAlign: "center",
     lineHeight: Typography.lineHeights.body * Typography.fontSizes.md,
+  },
+  noticeContainer: {
+    margin: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  noticeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  noticeTitle: {
+    fontFamily: fontFamilies.medium,
+    fontSize: Typography.fontSizes.md,
+    marginLeft: Spacing.sm,
+  },
+  noticeText: {
+    fontFamily: fontFamilies.regular,
+    fontSize: Typography.fontSizes.sm,
+    lineHeight: Typography.lineHeights.body * Typography.fontSizes.sm,
   },
 });
