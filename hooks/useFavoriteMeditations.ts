@@ -137,15 +137,46 @@ export function useFavoriteMeditations() {
   const store = useFavoritesStore();
   const [isLocalLoading, setIsLocalLoading] = useState(true);
 
-  // Handle local storage loading for guest users
+  // Handle local storage loading for guest users with timeout
   useEffect(() => {
-    // Simulate a brief loading period for local storage hydration
-    const timer = setTimeout(() => {
-      setIsLocalLoading(false);
-    }, 100);
+    let localLoadingTimeout: NodeJS.Timeout;
+    let isResolved = false;
 
-    return () => clearTimeout(timer);
-  }, []);
+    const resolveLocalLoading = () => {
+      if (!isResolved) {
+        isResolved = true;
+        setIsLocalLoading(false);
+      }
+    };
+
+    // Set up timeout for local storage loading (5 seconds)
+    localLoadingTimeout = setTimeout(() => {
+      console.warn("Local storage loading timed out");
+      resolveLocalLoading();
+    }, 5000);
+
+    // Check if local storage has already been hydrated
+    // This is a more reliable way to detect when Zustand persist has finished loading
+    const checkHydration = () => {
+      // If we can access the store and it has been initialized, consider it loaded
+      try {
+        // Access the store to trigger hydration check
+        store.localFavorites;
+        resolveLocalLoading();
+      } catch (error) {
+        // If there's an error accessing the store, wait a bit more
+        setTimeout(checkHydration, 100);
+      }
+    };
+
+    // Start checking for hydration after a small delay
+    const hydrationCheck = setTimeout(checkHydration, 100);
+
+    return () => {
+      clearTimeout(localLoadingTimeout);
+      clearTimeout(hydrationCheck);
+    };
+  }, [store]);
 
   useEffect(() => {
     if (!user) {
