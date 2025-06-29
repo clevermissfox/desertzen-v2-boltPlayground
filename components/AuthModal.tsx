@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
     padding: Spacing.sm, 
     borderRadius: 8,
     fontFamily: fontFamilies.regular,
+    height: 48,
   },
   passwordContainer: {
     position: "relative",
@@ -255,13 +256,17 @@ const styles = StyleSheet.create({
     paddingRight: 48, // Make room for the eye icon
     borderRadius: 8,
     fontFamily: fontFamilies.regular,
+    height: 48,
   },
   eyeButton: {
     position: "absolute",
     right: 12,
-    top: "50%",
-    transform: [{ translateY: -10 }], // Center the icon vertically
-    padding: 4,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 40,
+    height: 48,
   },
   button: {
     paddingVertical: Spacing.sm,
