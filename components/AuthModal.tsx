@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../hooks/useTheme";
 import Colors from "@/constants/Colors";
 import Spacing from "@/constants/Spacing";
@@ -35,6 +36,7 @@ export const AuthModal = ({
   const { theme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = () => {
     onAuth(email, password, mode);
@@ -52,7 +54,12 @@ export const AuthModal = ({
   const handleClose = () => {
     setEmail("");
     setPassword("");
+    setShowPassword(false);
     onClose();
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -105,21 +112,34 @@ export const AuthModal = ({
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          <TextInput
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            style={[
-              styles.input,
-              { 
-                borderColor: theme.border, 
-                color: theme.text,
-                backgroundColor: theme.background,
-              },
-            ]}
-            placeholderTextColor={theme.textTertiary}
-            secureTextEntry
-          />
+          
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              style={[
+                styles.passwordInput,
+                { 
+                  borderColor: theme.border, 
+                  color: theme.text,
+                  backgroundColor: theme.background,
+                },
+              ]}
+              placeholderTextColor={theme.textTertiary}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={togglePasswordVisibility}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off" : "eye"}
+                size={20}
+                color={theme.textTertiary}
+              />
+            </TouchableOpacity>
+          </View>
           
           {mode === "signIn" && (
             <TouchableOpacity 
@@ -224,6 +244,24 @@ const styles = StyleSheet.create({
     padding: Spacing.sm, 
     borderRadius: 8,
     fontFamily: fontFamilies.regular,
+  },
+  passwordContainer: {
+    position: "relative",
+    marginBottom: Spacing.sm,
+  },
+  passwordInput: {
+    borderWidth: 1,
+    padding: Spacing.sm,
+    paddingRight: 48, // Make room for the eye icon
+    borderRadius: 8,
+    fontFamily: fontFamilies.regular,
+  },
+  eyeButton: {
+    position: "absolute",
+    right: 12,
+    top: "50%",
+    transform: [{ translateY: -10 }], // Center the icon vertically
+    padding: 4,
   },
   button: {
     paddingVertical: Spacing.sm,
